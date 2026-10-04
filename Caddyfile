@@ -1,0 +1,33 @@
+{
+	auto_https off
+}
+
+:8000 {
+	log {
+		output stdout
+		format console
+	}
+
+	# PLC directory
+	@plc host plc.{$DOMAIN}
+	handle @plc {
+		reverse_proxy plc:{$PLC_PORT}
+	}
+
+	# Jetstream (read API)
+	@jetstream host jetstream.{$DOMAIN}
+	handle @jetstream {
+		reverse_proxy jetstream:{$JETSTREAM_PORT}
+	}
+
+	# Relay
+	@relay host relay.{$DOMAIN}
+	handle @relay {
+		reverse_proxy relay:{$RELAY_PORT}
+	}
+
+	# Everything else -> PDS (covers pds.<DOMAIN> and the host proxy hostname)
+	handle {
+		reverse_proxy pds:{$PDS_PORT}
+	}
+}

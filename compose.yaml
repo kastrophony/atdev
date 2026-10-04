@@ -1,0 +1,165 @@
+services:
+  caddy:
+    container_name: caddy
+    image: caddy:2-alpine
+    ports:
+      - "${CADDY_PORT:-8000}:8000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN}
+      - PDS_PORT=80
+      - PLC_PORT=4000
+      - JETSTREAM_PORT=8080
+      - RELAY_PORT=2470
+    depends_on:
+      - pds
+      - plc
+      - jetstream
+      - relay
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_CADDY:-1}
+
+  pds:
+    container_name: pds
+    image: ghcr.io/bluesky-social/pds:latest
+    volumes:
+      - pds_data:/pds
+    env_file:
+      - .env
+    environment:
+      - LOG_ENABLED=true
+      - PORT=80
+      - PDS_PORT=80
+      - PDS_HOSTNAME=pds.${DOMAIN}
+      - PDS_DATA_DIRECTORY=/pds
+      - PDS_BLOBSTORE_DISK_LOCATION=/pds/blobs
+      - PDS_DEV_MODE=true
+      - PDS_INVITE_REQUIRED=false
+      - PDS_SERVICE_HANDLE_DOMAINS=.test
+      - PDS_DID_PLC_URL=http://plc:4000
+      - PDS_CRAWLERS=https://relay.${DOMAIN}
+    networks:
+      default:
+        aliases:
+          - pds.${DOMAIN}
+    depends_on:
+      - plc
+      - relay
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_PDS:-1}
+
+  plc_db:
+    container_name: plc_db
+    image: postgres:14.4-alpine
+    volumes:
+      - plc_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=pg
+      - POSTGRES_PASSWORD=${PLC_POSTGRES_PASSWORD}
+      - POSTGRES_DB=plc
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_PLC:-1}
+
+  plc:
+    container_name: plc
+    build:
+      context: https://github.com/did-method-plc/did-method-plc.git
+      dockerfile: packages/server/Dockerfile
+    command: ["dumb-init", "node", "--enable-source-maps", "../dist/bin.js"]
+    environment:
+      - DATABASE_URL=postgres://pg:${PLC_POSTGRES_PASSWORD}@plc_db:5432/plc
+      - PORT=4000
+      - ADMIN_SECRET=${PLC_ADMIN_SECRET:-}
+    depends_on:
+      plc_db:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_PLC:-1}
+
+  jetstream:
+    container_name: jetstream
+    image: ghcr.io/bluesky-social/jetstream:v0.2.2
+    user: root
+    volumes:
+      - jetstream_data:/data
+    environment:
+      - JETSTREAM_RELAY_URL=http://relay:2470
+      - JETSTREAM_PLC_URL=http://plc:4000
+      - JETSTREAM_DATA_DIR=/data
+      - JETSTREAM_ADDR=:8080
+      - JETSTREAM_DEBUG_ADDR=:6060
+      - JETSTREAM_LOG_LEVEL=info
+    depends_on:
+      - plc
+      - relay
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_JETSTREAM:-1}
+
+  relay:
+    container_name: relay
+    build:
+      context: https://github.com/bluesky-social/indigo.git
+      dockerfile: cmd/relay/Dockerfile
+      args:
+        BUILDKIT_CONTEXT_KEEP_GIT_DIR: 1
+    volumes:
+      - relay_data:/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://relaypg:${RELAY_POSTGRES_PASSWORD}@relay_db:5432/relay
+      - RELAY_API_LISTEN=:2470
+      - RELAY_PLC_HOST=http://plc:4000
+      - RELAY_PERSIST_DIR=/data/relay/persist
+      - RELAY_LENIENT_SYNC_VALIDATION=true
+      - RELAY_REPLAY_WINDOW=24h
+    depends_on:
+      relay_db:
+        condition: service_healthy
+      plc:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_RELAY:-1}
+
+  relay_db:
+    container_name: relay_db
+    image: postgres:17-alpine
+    volumes:
+      - relay_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=relaypg
+      - POSTGRES_PASSWORD=${RELAY_POSTGRES_PASSWORD}
+      - POSTGRES_DB=relay
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_RELAY:-1}
+
+volumes:
+  pds_data:
+  plc_data:
+  jetstream_data:
+  relay_data:
+  relay_db_data:
+  caddy_data:
+  caddy_config:
