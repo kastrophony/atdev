@@ -12,7 +12,8 @@ cp .env.example .env
 
 Fill out `.env`.
 
-`DEPLOY_*` scale replicas and `CADDY_PORT` sets the exposed host port.
+Set `DEPLOY_*` to `0` to disable a service. `CADDY_PORT` sets the exposed host
+port.
 
 ## remote
 
