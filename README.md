@@ -4,6 +4,12 @@
 
 Self-contained [AT Protocol](https://atproto.com) development environment.
 
+- PDS
+- PLC
+- Relay
+- Jetstream
+- Constellation
+
 ## setup
 
 ```sh
@@ -14,18 +20,19 @@ Fill out `.env`. Set `DEPLOY_*` to `0` to disable a service.
 
 ## remote
 
-| Service   | Address                     |
-| --------- | --------------------------- |
-| PDS       | `https://pds.$DOMAIN`       |
-| PLC       | `https://plc.$DOMAIN`       |
-| Relay     | `https://relay.$DOMAIN`     |
-| Jetstream | `https://jetstream.$DOMAIN` |
+| Service       | Address                         |
+| ------------- | ------------------------------- |
+| PDS           | `https://pds.$DOMAIN`           |
+| PLC           | `https://plc.$DOMAIN`           |
+| Relay         | `https://relay.$DOMAIN`         |
+| Jetstream     | `https://jetstream.$DOMAIN`     |
+| Constellation | `https://constellation.$DOMAIN` |
 
 Caddy sits in front as a reverse proxy.
 
 1. Set `DOMAIN` and fill in every blank secret in `.env`.
-2. Point `pds`, `plc`, `relay`, and `jetstream` DNS records at this host and
-   terminate TLS in front of Caddy (it listens on `CADDY_PORT`).
+2. Point `pds`, `plc`, `relay`, `jetstream`, and `constellation` DNS records
+   at this host and terminate TLS in front of Caddy (it listens on `CADDY_PORT`).
 3. `docker compose up -d`.
 
 Request crawl:
@@ -39,12 +46,13 @@ docker compose restart relay
 
 ## localhost
 
-| Service   | Address                 |
-| --------- | ----------------------- |
-| PDS       | `http://localhost:3000` |
-| PLC       | `http://localhost:4000` |
-| Relay     | `http://localhost:2470` |
-| Jetstream | `http://localhost:8080` |
+| Service       | Address                 |
+| ------------- | ----------------------- |
+| PDS           | `http://localhost:3000` |
+| PLC           | `http://localhost:4000` |
+| Relay         | `http://localhost:2470` |
+| Jetstream     | `http://localhost:8080` |
+| Constellation | `http://localhost:6789` |
 
 ```sh
 docker compose -f compose.yaml -f compose.local.yaml up -d
@@ -61,4 +69,5 @@ docker compose restart relay
 
 ## notes
 
-Handles use `.test` by default, e.g. `alice.test`.
+- Handles use `.test` by default, e.g. `alice.test`.
+- Constellation duplicates indexed records every every 4 seconds 🤷‍♀️.

@@ -14,11 +14,13 @@ services:
       - PLC_PORT=4000
       - JETSTREAM_PORT=8080
       - RELAY_PORT=2470
+      - CONSTELLATION_PORT=6789
     depends_on:
       - pds
       - plc
       - jetstream
       - relay
+      - constellation
     restart: unless-stopped
     deploy:
       replicas: ${DEPLOY_CADDY:-1}
@@ -109,6 +111,30 @@ services:
     deploy:
       replicas: ${DEPLOY_JETSTREAM:-1}
 
+  constellation:
+    container_name: constellation
+    build:
+      context: https://tangled.org/microcosm.blue/microcosm-rs.git
+      dockerfile: constellation/Dockerfile
+    volumes:
+      - constellation_data:/data
+    command:
+      - "--jetstream"
+      - "ws://jetstream:8080/subscribe"
+      - "--backend"
+      - "rocks"
+      - "--data"
+      - "/data"
+      - "--bind"
+      - "0.0.0.0:6789"
+      - "--did-web-domain"
+      - "constellation.${DOMAIN}"
+    depends_on:
+      - jetstream
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_CONSTELLATION:-1}
+
   relay:
     container_name: relay
     build:
@@ -159,6 +185,7 @@ volumes:
   pds_data:
   plc_data:
   jetstream_data:
+  constellation_data:
   relay_data:
   relay_db_data:
   caddy_data:

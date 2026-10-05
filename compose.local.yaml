@@ -31,3 +31,15 @@ services:
     environment:
       - JETSTREAM_RELAY_URL=http://localhost:2470
       - JETSTREAM_PLC_URL=http://localhost:4000
+
+  constellation:
+    network_mode: host
+    command:
+      - "--jetstream"
+      - "ws://localhost:8080/subscribe"
+      - "--backend"
+      - "rocks"
+      - "--data"
+      - "/data"
+      - "--bind"
+      - "0.0.0.0:6789"

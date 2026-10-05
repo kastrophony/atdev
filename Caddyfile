@@ -14,10 +14,16 @@
 		reverse_proxy plc:{$PLC_PORT}
 	}
 
-	# Jetstream (read API)
+	# Jetstream
 	@jetstream host jetstream.{$DOMAIN}
 	handle @jetstream {
 		reverse_proxy jetstream:{$JETSTREAM_PORT}
+	}
+
+	# Constellation
+	@constellation host constellation.{$DOMAIN}
+	handle @constellation {
+		reverse_proxy constellation:{$CONSTELLATION_PORT}
 	}
 
 	# Relay
