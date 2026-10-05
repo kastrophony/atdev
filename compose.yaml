@@ -91,7 +91,7 @@ services:
 
   jetstream:
     container_name: jetstream
-    image: ghcr.io/bluesky-social/jetstream:v0.2.2
+    image: ghcr.io/bluesky-social/jetstream:v0.3.6
     user: root
     volumes:
       - jetstream_data:/data
