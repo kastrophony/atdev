@@ -10,10 +10,7 @@ Self-contained [AT Protocol](https://atproto.com) development environment.
 cp .env.example .env
 ```
 
-Fill out `.env`.
-
-Set `DEPLOY_*` to `0` to disable a service. `CADDY_PORT` sets the exposed host
-port.
+Fill out `.env`. Set `DEPLOY_*` to `0` to disable a service.
 
 ## remote
 
