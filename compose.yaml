@@ -57,7 +57,7 @@ services:
 
   plc_db:
     container_name: plc_db
-    image: postgres:14.4-alpine
+    image: postgres:14-alpine
     volumes:
       - plc_data:/var/lib/postgresql/data
     environment:
