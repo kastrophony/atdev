@@ -1,0 +1,15 @@
+services:
+  caddy:
+    image: atdev-caddy:cloudflare
+    build:
+      context: examples/cloudflare-tls
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./examples/cloudflare-tls/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - examples/cloudflare-tls/.env

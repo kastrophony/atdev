@@ -1,0 +1,25 @@
+(cf_tls) {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+}
+
+pds.{$DOMAIN} {
+	reverse_proxy pds:{$PDS_PORT}
+	import cf_tls
+}
+
+plc.{$DOMAIN} {
+	reverse_proxy plc:{$PLC_PORT}
+	import cf_tls
+}
+
+relay.{$DOMAIN} {
+	reverse_proxy relay:{$RELAY_PORT}
+	import cf_tls
+}
+
+jetstream.{$DOMAIN} {
+	reverse_proxy jetstream:{$JETSTREAM_PORT}
+	import cf_tls
+}
