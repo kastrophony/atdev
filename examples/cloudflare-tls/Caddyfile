@@ -23,3 +23,8 @@ jetstream.{$DOMAIN} {
 	reverse_proxy jetstream:{$JETSTREAM_PORT}
 	import cf_tls
 }
+
+space.{$DOMAIN} {
+	reverse_proxy spaces_pds:{$SPACES_PDS_PORT}
+	import cf_tls
+}

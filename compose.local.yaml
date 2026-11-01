@@ -11,6 +11,13 @@ services:
     ports:
       - "3000:3000"
 
+  spaces_pds:
+    environment:
+      - PDS_PORT=2583
+      - PDS_HOSTNAME=localhost
+    ports:
+      - "2583:2583"
+
   plc:
     ports:
       - "4000:4000"

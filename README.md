@@ -5,6 +5,7 @@
 Self-contained [AT Protocol](https://atproto.com) development environment.
 
 - PDS
+- Spaces
 - PLC
 - Relay
 - Jetstream
@@ -19,17 +20,18 @@ Fill out `.env`. Set `DEPLOY_*` to `0` to disable a service.
 
 ## remote
 
-| Service       | Address                         |
-| ------------- | ------------------------------- |
-| PDS           | `https://pds.$DOMAIN`           |
-| PLC           | `https://plc.$DOMAIN`           |
-| Relay         | `https://relay.$DOMAIN`         |
-| Jetstream     | `https://jetstream.$DOMAIN`     |
+| Service      | Address                         |
+| ------------ | ------------------------------- |
+| PDS          | `https://pds.$DOMAIN`           |
+| Spaces       | `https://space.$DOMAIN`         |
+| PLC          | `https://plc.$DOMAIN`           |
+| Relay        | `https://relay.$DOMAIN`         |
+| Jetstream    | `https://jetstream.$DOMAIN`     |
 
 Caddy sits in front as a reverse proxy.
 
 1. Set `DOMAIN` and fill in every blank secret in `.env`.
-2. Point `pds`, `plc`, `relay`, and `jetstream` DNS records
+2. Point `pds`, `space`, `plc`, `relay`, and `jetstream` DNS records
    at this host and terminate TLS in front of Caddy (it listens on `CADDY_PORT`).
 3. `docker compose up -d`.
 
@@ -39,6 +41,9 @@ Request crawl:
 docker compose exec -T relay_db psql -U "$RELAY_POSTGRES_USER" -d "$RELAY_DATABASE" -c \
   "INSERT INTO host (created_at, updated_at, hostname, no_ssl, account_limit, trusted, status, last_seq, account_count) VALUES (now(), now(), 'pds.$DOMAIN', true, 100, false, 'active', -1, 0) ON CONFLICT (hostname) DO UPDATE SET no_ssl=true, status='active', updated_at=now();"
 
+docker compose exec -T relay_db psql -U "$RELAY_POSTGRES_USER" -d "$RELAY_DATABASE" -c \
+  "INSERT INTO host (created_at, updated_at, hostname, no_ssl, account_limit, trusted, status, last_seq, account_count) VALUES (now(), now(), 'space.$DOMAIN:3000', true, 100, false, 'active', -1, 0) ON CONFLICT (hostname) DO UPDATE SET no_ssl=true, status='active', updated_at=now();"
+
 docker compose restart relay
 ```
 
@@ -47,6 +52,7 @@ docker compose restart relay
 | Service       | Address                 |
 | ------------- | ----------------------- |
 | PDS           | `http://localhost:3000` |
+| Spaces        | `http://localhost:2583` |
 | PLC           | `http://localhost:4000` |
 | Relay         | `http://localhost:2470` |
 | Jetstream     | `http://localhost:8080` |
@@ -61,9 +67,12 @@ Request crawl:
 docker compose exec -T relay_db psql -U "$RELAY_POSTGRES_USER" -d "$RELAY_DATABASE" -c \
   "INSERT INTO host (created_at, updated_at, hostname, no_ssl, account_limit, trusted, status, last_seq, account_count) VALUES (now(), now(), 'localhost:3000', true, 100, false, 'active', -1, 0) ON CONFLICT (hostname) DO UPDATE SET no_ssl=true, status='active', updated_at=now();"
 
+docker compose exec -T relay_db psql -U "$RELAY_POSTGRES_USER" -d "$RELAY_DATABASE" -c \
+  "INSERT INTO host (created_at, updated_at, hostname, no_ssl, account_limit, trusted, status, last_seq, account_count) VALUES (now(), now(), 'localhost:2583', true, 100, false, 'active', -1, 0) ON CONFLICT (hostname) DO UPDATE SET no_ssl=true, status='active', updated_at=now();"
+
 docker compose restart relay
 ```
 
 ## notes
 
-- Handles use `.test` by default, e.g. `alice.test`.
+- Handles use `.test` and `.spaces.test` by default, e.g. `alice.test`.

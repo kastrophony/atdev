@@ -11,11 +11,13 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
       - PDS_PORT=80
+      - SPACES_PDS_PORT=3000
       - PLC_PORT=4000
       - JETSTREAM_PORT=8080
       - RELAY_PORT=2470
     depends_on:
       - pds
+      - spaces_pds
       - plc
       - jetstream
       - relay
@@ -32,7 +34,6 @@ services:
       - .env
     environment:
       - LOG_ENABLED=true
-      - PORT=80
       - PDS_PORT=80
       - PDS_HOSTNAME=pds.${DOMAIN}
       - PDS_DATA_DIRECTORY=/pds
@@ -52,6 +53,35 @@ services:
     restart: unless-stopped
     deploy:
       replicas: ${DEPLOY_PDS:-1}
+
+  spaces_pds:
+    container_name: spaces_pds
+    image: ghcr.io/bluesky-social/atproto:pds-spaces-alpha
+    volumes:
+      - spaces_pds_data:/app/data
+    env_file:
+      - .env
+    environment:
+      - LOG_ENABLED=true
+      - PDS_PORT=3000
+      - PDS_HOSTNAME=space.${DOMAIN}
+      - PDS_DATA_DIRECTORY=/app/data
+      - PDS_BLOBSTORE_DISK_LOCATION=/app/data/blobs
+      - PDS_DEV_MODE=true
+      - PDS_INVITE_REQUIRED=false
+      - PDS_SERVICE_HANDLE_DOMAINS=.spaces.test
+      - PDS_DID_PLC_URL=http://plc:4000
+      - PDS_CRAWLERS=https://relay.${DOMAIN}
+    networks:
+      default:
+        aliases:
+          - space.${DOMAIN}
+    depends_on:
+      - plc
+      - relay
+    restart: unless-stopped
+    deploy:
+      replicas: ${DEPLOY_SPACES_PDS:-1}
 
   plc_db:
     container_name: plc_db
@@ -157,6 +187,7 @@ services:
 
 volumes:
   pds_data:
+  spaces_pds_data:
   plc_data:
   jetstream_data:
   relay_data:

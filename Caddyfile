@@ -26,6 +26,12 @@
 		reverse_proxy relay:{$RELAY_PORT}
 	}
 
+	# Spaces PDS
+	@spaces_pds host space.{$DOMAIN}
+	handle @spaces_pds {
+		reverse_proxy spaces_pds:{$SPACES_PDS_PORT}
+	}
+
 	# Everything else -> PDS (covers pds.<DOMAIN> and the host proxy hostname)
 	handle {
 		reverse_proxy pds:{$PDS_PORT}
